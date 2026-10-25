@@ -26,7 +26,7 @@
         padding: 16px;
       }
 
-      /* Tampilan HP (Default) */
+      /* Tampilan Utama */
       .card {
         background: #1e293b;
         width: 100%;
@@ -82,6 +82,7 @@
         opacity: 0.8;
       }
 
+      /* Tombol Kontrol */
       .controls {
         margin-top: 16px;
         display: flex;
@@ -109,7 +110,6 @@
         opacity: 0.6;
         transform: none;
       }
-
       .btn-snap {
         background: #ef4444;
       }
@@ -145,6 +145,7 @@
         font-weight: 500;
       }
 
+      /* Galeri Mini (Sesi Lokal) */
       .gallery-container {
         margin-top: 16px;
         display: flex;
@@ -183,7 +184,7 @@
         border: 2px solid #1e293b;
       }
 
-      /* Modal Album */
+      /* Modal Album Server & Fitur Like */
       .modal {
         display: none;
         position: fixed;
@@ -216,13 +217,19 @@
       .close-modal:hover {
         color: #ef4444;
       }
+
       .album-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
+        gap: 16px;
         margin-top: 20px;
       }
-      .album-grid img {
+      .album-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .album-card img {
         width: 100%;
         aspect-ratio: 3/4;
         object-fit: cover;
@@ -230,8 +237,33 @@
         border: 1px solid #334155;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
       }
+      .like-btn {
+        background: #334155;
+        border: 1px solid #475569;
+        color: white;
+        padding: 8px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: 0.2s;
+      }
+      .like-btn:hover {
+        background: #475569;
+      }
+      .like-btn:active {
+        transform: scale(0.95);
+      }
+      .like-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
 
-      /* Media Query untuk Laptop / Tablet (Tampilan membesar & menyesuaikan) */
+      /* Media Query Laptop */
       @media (min-width: 768px) {
         .card {
           max-width: 600px;
@@ -260,7 +292,7 @@
   <body>
     <div class="card">
       <h2>📸 Event Photobooth</h2>
-      <div class="counter" id="counter">Foto: 0 / 35</div>
+      <div class="counter" id="counter">Sesi Foto: 0 / 35</div>
 
       <div class="video-wrapper">
         <video id="webcam" autoplay playsinline class="mirror"></video>
@@ -319,7 +351,10 @@
     <div id="albumModal" class="modal">
       <div class="modal-content">
         <span class="close-modal" onclick="closeAlbum()">&times;</span>
-        <h2 style="color: #38bdf8; margin-bottom: 10px">Album Foto</h2>
+        <h2 style="color: #38bdf8; margin-bottom: 5px">Album Foto Server</h2>
+        <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px">
+          Menampilkan semua foto dari Drive, diurutkan dari Like terbanyak.
+        </p>
         <div id="albumGrid" class="album-grid"></div>
       </div>
     </div>
@@ -327,16 +362,16 @@
     <canvas id="canvas" style="display: none"></canvas>
 
     <script>
-      // MASUKKAN LINK APPS SCRIPT KAMU DI BAWAH INI
+      // Link Apps Script Kamu
       const SCRIPT_URL =
-        "https://script.google.com/macros/s/AKfycbyLwW3A59IFV_K9hkNQEp9gopxTAusm1nypFXd4pgoYqaaTIcLULbvdG7iTzbKy4ifttA/exec";
+        "https://script.google.com/macros/s/AKfycbzdE7xHeDoN-hD5XSI1a7GABauzFtG-6YdewjD4p9t27_INIAEHohskf4rQ0jnW8BVK4Q/exec";
 
       let photoCount = 0;
       const MAX_PHOTOS = 35;
       let currentStream = null;
       let useFacingMode = "user";
       let isCameraOn = true;
-      let photoAlbumData = [];
+      let photoAlbumData = []; // Untuk UI lokal saat jepret
 
       function updateStatus(msg) {
         document.getElementById("status").innerHTML = msg;
@@ -358,26 +393,20 @@
         if (currentStream) {
           currentStream.getTracks().forEach((track) => track.stop());
         }
-        const constraints = {
-          video: {
-            facingMode: useFacingMode,
-            width: { ideal: 1280 },
-            height: { ideal: 960 },
-          },
-          audio: false,
-        };
-
         navigator.mediaDevices
-          .getUserMedia(constraints)
+          .getUserMedia({
+            video: {
+              facingMode: useFacingMode,
+              width: { ideal: 1280 },
+              height: { ideal: 960 },
+            },
+            audio: false,
+          })
           .then((stream) => {
             currentStream = stream;
             const video = document.getElementById("webcam");
             video.srcObject = stream;
-            if (useFacingMode === "user") {
-              video.classList.add("mirror");
-            } else {
-              video.classList.remove("mirror");
-            }
+            video.classList.toggle("mirror", useFacingMode === "user");
             if (photoCount < MAX_PHOTOS) {
               document.getElementById("snapBtn").disabled = false;
             }
@@ -428,29 +457,25 @@
 
       function addToGallery(base64Data, localId) {
         photoAlbumData.push({ id: localId, src: base64Data });
-
         const gallery = document.getElementById("gallery");
         const itemWrapper = document.createElement("div");
         itemWrapper.className = "gallery-item";
         itemWrapper.id = "wrap_" + localId;
-
         const img = document.createElement("img");
         img.src = base64Data;
-
         const delBtn = document.createElement("div");
         delBtn.className = "delete-btn";
         delBtn.id = "del_" + localId;
         delBtn.innerHTML = "✖";
 
+        // Logika Menghapus Foto Lokal & Memindah ke Log Drive
         delBtn.onclick = function () {
           const fileId = this.dataset.fileId;
-
           itemWrapper.remove();
           photoCount--;
           document.getElementById("counter").innerText =
-            `Foto: ${photoCount} / ${MAX_PHOTOS}`;
+            `Sesi Foto: ${photoCount} / ${MAX_PHOTOS}`;
           setButtonsState(false);
-
           photoAlbumData = photoAlbumData.filter((item) => item.id !== localId);
 
           if (fileId) {
@@ -468,7 +493,6 @@
               });
           }
         };
-
         itemWrapper.appendChild(img);
         itemWrapper.appendChild(delBtn);
         gallery.appendChild(itemWrapper);
@@ -477,20 +501,14 @@
 
       function processAndUpload(base64Data) {
         if (photoCount >= MAX_PHOTOS) return;
-
         photoCount++;
         document.getElementById("counter").innerText =
-          `Foto: ${photoCount} / ${MAX_PHOTOS}`;
-
+          `Sesi Foto: ${photoCount} / ${MAX_PHOTOS}`;
         const localId = "photo_" + Date.now();
         addToGallery(base64Data, localId);
 
         updateStatus(`⏳ Mengunggah foto ke-${photoCount}...`);
-        setButtonsState(true); // Kunci tombol saat upload mencegah spam
-
-        if (photoCount >= MAX_PHOTOS) {
-          updateStatus("⏳ Mengunggah foto terakhir... Sesi penuh.");
-        }
+        setButtonsState(true);
 
         fetch(SCRIPT_URL, {
           method: "POST",
@@ -518,12 +536,10 @@
             updateStatus("❌ Terjadi kesalahan jaringan.");
           })
           .finally(() => {
-            setButtonsState(false); // Buka kembali kunci tombol setelah selesai
+            setButtonsState(false);
             if (photoCount >= MAX_PHOTOS) {
               document.getElementById("snapBtn").disabled = true;
-              updateStatus(
-                "Sesi penuh (Maksimal 35 foto). Hapus foto untuk menjepret lagi.",
-              );
+              updateStatus("Sesi penuh (Maksimal 35 foto).");
             }
           });
       }
@@ -540,8 +556,7 @@
           ctx.scale(-1, 1);
         }
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const base64Data = canvas.toDataURL("image/jpeg", 0.8);
-        processAndUpload(base64Data);
+        processAndUpload(canvas.toDataURL("image/jpeg", 0.8));
       }
 
       function handleFileUpload(event) {
@@ -560,29 +575,80 @@
         }
       }
 
+      // MEMUAT DAN MENAMPILKAN ALBUM SERVER (DARI DRIVE)
       function openAlbum() {
         const modal = document.getElementById("albumModal");
         const grid = document.getElementById("albumGrid");
-        grid.innerHTML = "";
-        if (photoAlbumData.length === 0) {
-          grid.innerHTML =
-            '<p style="color:#94a3b8; grid-column: span 4;">Belum ada foto yang diambil.</p>';
-        } else {
-          photoAlbumData.forEach((item) => {
-            const img = document.createElement("img");
-            img.src = item.src;
-            grid.appendChild(img);
-          });
-        }
+        grid.innerHTML =
+          '<p style="color:#38bdf8; grid-column: span 3; font-weight:bold;">⏳ Memuat foto dari Google Drive...</p>';
         modal.style.display = "block";
+
+        fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "get_album" }),
+        })
+          .then((res) => res.json())
+          .then((res) => {
+            grid.innerHTML = "";
+            if (res.success && res.data.length > 0) {
+              res.data.forEach((photo) => {
+                const card = document.createElement("div");
+                card.className = "album-card";
+                const img = document.createElement("img");
+                img.src = photo.url;
+                img.loading = "lazy";
+
+                const likeBtn = document.createElement("button");
+                likeBtn.className = "like-btn";
+                likeBtn.innerHTML = `❤️ <span id="like-${photo.id}">${photo.likes}</span>`;
+                likeBtn.onclick = function () {
+                  likePhoto(photo.id, likeBtn);
+                };
+
+                card.appendChild(img);
+                card.appendChild(likeBtn);
+                grid.appendChild(card);
+              });
+            } else {
+              grid.innerHTML =
+                '<p style="color:#94a3b8; grid-column: span 3;">Belum ada foto di Master Folder.</p>';
+            }
+          })
+          .catch((err) => {
+            grid.innerHTML =
+              '<p style="color:#ef4444; grid-column: span 3;">Gagal memuat album.</p>';
+          });
+      }
+
+      // FUNGSI MENGIRIM LIKE KE SERVER
+      function likePhoto(fileId, btnElement) {
+        btnElement.disabled = true;
+        const countSpan = document.getElementById("like-" + fileId);
+        let currentLikes = parseInt(countSpan.innerText);
+        countSpan.innerText = currentLikes + 1; // Update UI cepat
+
+        fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "like_photo", fileId: fileId }),
+        })
+          .then((res) => res.json())
+          .then((res) => {
+            if (res.success) {
+              countSpan.innerText = res.likes;
+            } // Nilai sah dari server
+            btnElement.disabled = false;
+          })
+          .catch((err) => {
+            countSpan.innerText = currentLikes; // Kembalikan jika error
+            btnElement.disabled = false;
+          });
       }
 
       function closeAlbum() {
         document.getElementById("albumModal").style.display = "none";
       }
       window.onclick = function (event) {
-        const modal = document.getElementById("albumModal");
-        if (event.target == modal) {
+        if (event.target == document.getElementById("albumModal")) {
           closeAlbum();
         }
       };
