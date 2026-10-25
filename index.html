@@ -187,6 +187,42 @@
         border: 2px solid #38bdf8;
         background: #334155;
       }
+      .upload-progress {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 6px;
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.82);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-align: center;
+      }
+      .upload-progress-track {
+        width: 100%;
+        height: 6px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #475569;
+      }
+      .upload-progress-fill {
+        width: 0%;
+        height: 100%;
+        border-radius: inherit;
+        background: #38bdf8;
+        transition: width 0.15s ease;
+      }
+      .upload-progress.is-complete .upload-progress-fill {
+        background: #10b981;
+      }
+      .upload-progress.is-error .upload-progress-fill {
+        background: #ef4444;
+      }
       .delete-btn {
         position: absolute;
         top: -6px;
@@ -257,6 +293,18 @@
         border-radius: 8px;
         border: 1px solid #334155;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      }
+      .album-image-error {
+        display: flex;
+        aspect-ratio: 3/4;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        border: 1px solid #475569;
+        border-radius: 8px;
+        color: #fca5a5;
+        font-size: 0.8rem;
+        overflow-wrap: anywhere;
       }
       .like-btn {
         background: #334155;
@@ -527,6 +575,20 @@
         itemWrapper.id = "wrap_" + localId;
         const img = document.createElement("img");
         img.src = base64Data;
+        const progress = document.createElement("div");
+        progress.className = "upload-progress";
+        progress.id = "progress_" + localId;
+        const progressLabel = document.createElement("span");
+        progressLabel.id = "progress-label_" + localId;
+        progressLabel.textContent = "0%";
+        const progressTrack = document.createElement("div");
+        progressTrack.className = "upload-progress-track";
+        const progressFill = document.createElement("div");
+        progressFill.className = "upload-progress-fill";
+        progressFill.id = "progress-fill_" + localId;
+        progressTrack.appendChild(progressFill);
+        progress.appendChild(progressLabel);
+        progress.appendChild(progressTrack);
         const delBtn = document.createElement("div");
         delBtn.className = "delete-btn";
         delBtn.id = "del_" + localId;
@@ -558,56 +620,112 @@
           }
         };
         itemWrapper.appendChild(img);
+        itemWrapper.appendChild(progress);
         itemWrapper.appendChild(delBtn);
         gallery.appendChild(itemWrapper);
         gallery.scrollLeft = gallery.scrollWidth;
       }
 
+      function updateUploadProgress(localId, percentage, label) {
+        const progress = document.getElementById("progress_" + localId);
+        const progressLabel = document.getElementById(
+          "progress-label_" + localId,
+        );
+        const progressFill = document.getElementById(
+          "progress-fill_" + localId,
+        );
+        if (!progress || !progressLabel || !progressFill) return;
+
+        const boundedPercentage = Math.max(0, Math.min(100, percentage));
+        progressLabel.textContent = label || `${boundedPercentage}%`;
+        progressFill.style.width = `${boundedPercentage}%`;
+      }
+
       function processAndUpload(base64Data) {
         if (photoCount >= MAX_PHOTOS || isSessionEnded) return;
         photoCount++;
+        const photoNumber = photoCount;
         document.getElementById("counter").innerText =
           `Sesi Foto: ${photoCount} / ${MAX_PHOTOS}`;
-        const localId = "photo_" + Date.now();
+        const localId = `photo_${Date.now()}_${photoNumber}`;
         addToGallery(base64Data, localId);
 
-        updateStatus(`⏳ Mengunggah foto ke-${photoCount}...`);
-        setButtonsState(true);
+        updateStatus(`⏳ Mengunggah foto ke-${photoNumber}...`);
+        const request = new XMLHttpRequest();
+        request.open("POST", SCRIPT_URL);
+        request.setRequestHeader(
+          "Content-Type",
+          "text/plain;charset=utf-8",
+        );
+        request.upload.addEventListener("progress", (event) => {
+          if (!event.lengthComputable) return;
+          const percentage = Math.floor((event.loaded / event.total) * 100);
+          updateUploadProgress(localId, percentage);
+        });
+        request.upload.addEventListener("load", () => {
+          updateUploadProgress(localId, 100, "Menyimpan...");
+        });
+        request.addEventListener("load", () => {
+          let res;
+          try {
+            res = JSON.parse(request.responseText);
+          } catch (error) {
+            updateUploadProgress(localId, 100, "Gagal");
+            document
+              .getElementById("progress_" + localId)
+              ?.classList.add("is-error");
+            updateStatus("❌ Respons server tidak valid saat mengunggah foto.");
+            return;
+          }
 
-        fetch(SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({
+          if (res.success) {
+            updateUploadProgress(localId, 100, "100% tersimpan");
+            document
+              .getElementById("progress_" + localId)
+              ?.classList.add("is-complete");
+            updateStatus(`✅ Foto ke-${photoNumber} tersimpan!`);
+            const delBtn = document.getElementById("del_" + localId);
+            if (delBtn) {
+              delBtn.dataset.fileId = res.fileId;
+              delBtn.style.display = "flex";
+            }
+            setTimeout(() => {
+              document.getElementById("progress_" + localId)?.remove();
+            }, 1200);
+          } else {
+            updateUploadProgress(localId, 0, "Gagal");
+            document
+              .getElementById("progress_" + localId)
+              ?.classList.add("is-error");
+            updateStatus("❌ Gagal unggah: " + (res.error || "Unknown error"));
+          }
+        });
+        request.addEventListener("error", () => {
+          updateUploadProgress(localId, 0, "Gagal");
+          document
+            .getElementById("progress_" + localId)
+            ?.classList.add("is-error");
+          updateStatus("❌ Terjadi kesalahan jaringan saat mengunggah foto.");
+        });
+        request.addEventListener("abort", () => {
+          updateUploadProgress(localId, 0, "Dibatalkan");
+          document
+            .getElementById("progress_" + localId)
+            ?.classList.add("is-error");
+          updateStatus("❌ Unggah foto dibatalkan.");
+        });
+        request.send(
+          JSON.stringify({
             action: "upload",
             image: base64Data,
-            photoIndex: photoCount,
+            photoIndex: photoNumber,
           }),
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-        })
-          .then((response) => response.json())
-          .then((res) => {
-            if (res.success) {
-              updateStatus(`✅ Foto ke-${photoCount} tersimpan!`);
-              const delBtn = document.getElementById("del_" + localId);
-              if (delBtn) {
-                delBtn.dataset.fileId = res.fileId;
-                delBtn.style.display = "flex";
-              }
-            } else {
-              updateStatus("❌ Gagal unggah: " + res.error);
-            }
-          })
-          .catch((error) => {
-            updateStatus("❌ Terjadi kesalahan jaringan.");
-          })
-          .finally(() => {
-            if (!isSessionEnded) {
-              setButtonsState(false);
-              if (photoCount >= MAX_PHOTOS) {
-                document.getElementById("snapBtn").disabled = true;
-                updateStatus("Sesi penuh (Maksimal 35 foto).");
-              }
-            }
-          });
+        );
+
+        if (photoCount >= MAX_PHOTOS) {
+          document.getElementById("snapBtn").disabled = true;
+          updateStatus("Sesi penuh (Maksimal 35 foto).");
+        }
       }
 
       function takePhoto() {
@@ -657,19 +775,31 @@
           .then((res) => res.json())
           .then((res) => {
             grid.innerHTML = "";
-            if (res.success && res.data.length > 0) {
+            if (res.success && Array.isArray(res.data) && res.data.length > 0) {
               res.data.forEach((photo) => {
                 const card = document.createElement("div");
                 card.className = "album-card";
                 const img = document.createElement("img");
                 img.alt = "Foto album";
                 img.loading = "lazy";
+                const imageError = document.createElement("div");
+                imageError.className = "album-image-error";
+                imageError.textContent =
+                  "Foto tidak dapat dimuat. Periksa izin berbagi Google Drive.";
+                imageError.hidden = true;
                 const imageUrls = [
                   photo.url,
-                  `https://drive.google.com/thumbnail?id=${encodeURIComponent(photo.id)}&sz=w1000`,
-                  `https://drive.google.com/uc?export=view&id=${encodeURIComponent(photo.id)}`,
+                  photo.id
+                    ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(photo.id)}&sz=w1000`
+                    : null,
+                  photo.id
+                    ? `https://drive.google.com/uc?export=view&id=${encodeURIComponent(photo.id)}`
+                    : null,
                 ].filter(
-                  (url, index, urls) => url && urls.indexOf(url) === index,
+                  (url, index, urls) =>
+                    typeof url === "string" &&
+                    url &&
+                    urls.indexOf(url) === index,
                 );
                 let imageUrlIndex = 0;
                 img.onerror = function () {
@@ -678,7 +808,14 @@
                     img.src = imageUrls[imageUrlIndex];
                   } else {
                     img.alt = "Foto tidak dapat ditampilkan";
+                    img.title =
+                      "Foto gagal dimuat. Periksa izin akses file di Google Drive.";
+                    img.hidden = true;
+                    imageError.hidden = false;
                   }
+                };
+                img.onload = function () {
+                  imageError.hidden = true;
                 };
                 if (imageUrls.length > 0) {
                   img.src = imageUrls[imageUrlIndex];
@@ -694,6 +831,7 @@
                 };
 
                 card.appendChild(img);
+                card.appendChild(imageError);
                 card.appendChild(likeBtn);
                 grid.appendChild(card);
               });
@@ -703,14 +841,24 @@
               errorMessage.style.gridColumn = "span 3";
               errorMessage.textContent = `Gagal memuat album: ${res.error || "Terjadi kesalahan pada Apps Script."}`;
               grid.replaceChildren(errorMessage);
+            } else if (!Array.isArray(res.data)) {
+              const errorMessage = document.createElement("p");
+              errorMessage.style.color = "#ef4444";
+              errorMessage.style.gridColumn = "span 3";
+              errorMessage.textContent =
+                "Respons album Apps Script tidak valid. Periksa deployment Kode.gs.";
+              grid.replaceChildren(errorMessage);
             } else {
               grid.innerHTML =
                 '<p style="color:#94a3b8; grid-column: span 3;">Belum ada foto di Master Folder.</p>';
             }
           })
           .catch((err) => {
-            grid.innerHTML =
-              '<p style="color:#ef4444; grid-column: span 3;">Gagal memuat album.</p>';
+            const errorMessage = document.createElement("p");
+            errorMessage.style.color = "#ef4444";
+            errorMessage.style.gridColumn = "span 3";
+            errorMessage.textContent = `Gagal memuat album: ${err.message || "Periksa koneksi dan URL Apps Script."}`;
+            grid.replaceChildren(errorMessage);
           });
       }
 
