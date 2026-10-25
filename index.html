@@ -390,7 +390,7 @@
 
     <script>
       const SCRIPT_URL =
-        "https://script.google.com/macros/s/AKfycbwn5N2uzQ38CDv8HKDYE14On3Z1shcvdwnrcKbSboobw2WiPcj7DHhuYNKLNRiNPA2yEQ/exec";
+        "https://script.google.com/macros/s/AKfycbw4uJBrJ1keGUXTmurHkIxbV-cfNTB4-SLC2JcpE5Mn_SaQf5-u9dbw6tc4oTT45neA1A/exec";
 
       let photoCount = 0;
       const MAX_PHOTOS = 35;
@@ -662,8 +662,29 @@
                 const card = document.createElement("div");
                 card.className = "album-card";
                 const img = document.createElement("img");
-                img.src = photo.url;
+                img.alt = "Foto album";
                 img.loading = "lazy";
+                const imageUrls = [
+                  photo.url,
+                  `https://drive.google.com/thumbnail?id=${encodeURIComponent(photo.id)}&sz=w1000`,
+                  `https://drive.google.com/uc?export=view&id=${encodeURIComponent(photo.id)}`,
+                ].filter(
+                  (url, index, urls) => url && urls.indexOf(url) === index,
+                );
+                let imageUrlIndex = 0;
+                img.onerror = function () {
+                  imageUrlIndex++;
+                  if (imageUrlIndex < imageUrls.length) {
+                    img.src = imageUrls[imageUrlIndex];
+                  } else {
+                    img.alt = "Foto tidak dapat ditampilkan";
+                  }
+                };
+                if (imageUrls.length > 0) {
+                  img.src = imageUrls[imageUrlIndex];
+                } else {
+                  img.alt = "URL foto tidak tersedia";
+                }
 
                 const likeBtn = document.createElement("button");
                 likeBtn.className = "like-btn";
@@ -676,6 +697,12 @@
                 card.appendChild(likeBtn);
                 grid.appendChild(card);
               });
+            } else if (!res.success) {
+              const errorMessage = document.createElement("p");
+              errorMessage.style.color = "#ef4444";
+              errorMessage.style.gridColumn = "span 3";
+              errorMessage.textContent = `Gagal memuat album: ${res.error || "Terjadi kesalahan pada Apps Script."}`;
+              grid.replaceChildren(errorMessage);
             } else {
               grid.innerHTML =
                 '<p style="color:#94a3b8; grid-column: span 3;">Belum ada foto di Master Folder.</p>';
