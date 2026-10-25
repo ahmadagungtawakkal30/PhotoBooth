@@ -26,7 +26,6 @@
         padding: 16px;
       }
 
-      /* Tampilan Utama */
       .card {
         background: #1e293b;
         width: 100%;
@@ -50,6 +49,7 @@
         display: inline-block;
         margin-bottom: 16px;
       }
+
       .video-wrapper {
         position: relative;
         width: 100%;
@@ -67,6 +67,24 @@
       .mirror {
         transform: scaleX(-1);
       }
+
+      /* Indikator Kamera Off di dalam video */
+      .cam-off-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #0f172a;
+        color: #94a3b8;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+        z-index: 5;
+      }
+
       .flash {
         position: absolute;
         top: 0;
@@ -77,12 +95,12 @@
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.1s ease-out;
+        z-index: 6;
       }
       .flash.active {
         opacity: 0.8;
       }
 
-      /* Tombol Kontrol */
       .controls {
         margin-top: 16px;
         display: flex;
@@ -110,6 +128,7 @@
         opacity: 0.6;
         transform: none;
       }
+
       .btn-snap {
         background: #ef4444;
       }
@@ -135,6 +154,9 @@
       .btn-album {
         background: #8b5cf6;
       }
+      .btn-finish {
+        background: #059669;
+      }
 
       #status {
         margin-top: 14px;
@@ -145,7 +167,6 @@
         font-weight: 500;
       }
 
-      /* Galeri Mini (Sesi Lokal) */
       .gallery-container {
         margin-top: 16px;
         display: flex;
@@ -184,7 +205,7 @@
         border: 2px solid #1e293b;
       }
 
-      /* Modal Album Server & Fitur Like */
+      /* Modal Album */
       .modal {
         display: none;
         position: fixed;
@@ -263,7 +284,6 @@
         cursor: not-allowed;
       }
 
-      /* Media Query Laptop */
       @media (min-width: 768px) {
         .card {
           max-width: 600px;
@@ -296,6 +316,9 @@
 
       <div class="video-wrapper">
         <video id="webcam" autoplay playsinline class="mirror"></video>
+        <div id="camOffOverlay" class="cam-off-overlay">
+          🔴 Kamera Sedang Off
+        </div>
         <div id="flash" class="flash"></div>
       </div>
 
@@ -331,7 +354,14 @@
           class="btn btn-full btn-album"
           onclick="openAlbum()"
         >
-          🖼️ Lihat Album Keseluruhan
+          🖼️ Lihat Album
+        </button>
+        <button
+          id="finishBtn"
+          class="btn btn-full btn-finish"
+          onclick="finishSession()"
+        >
+          🏁 Selesai
         </button>
       </div>
 
@@ -351,10 +381,7 @@
     <div id="albumModal" class="modal">
       <div class="modal-content">
         <span class="close-modal" onclick="closeAlbum()">&times;</span>
-        <h2 style="color: #38bdf8; margin-bottom: 5px">Album Foto Server</h2>
-        <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px">
-          Menampilkan semua foto dari Drive, diurutkan dari Like terbanyak.
-        </p>
+        <h2 style="color: #38bdf8; margin-bottom: 15px">Album Foto</h2>
         <div id="albumGrid" class="album-grid"></div>
       </div>
     </div>
@@ -362,7 +389,6 @@
     <canvas id="canvas" style="display: none"></canvas>
 
     <script>
-      // Link Apps Script Kamu
       const SCRIPT_URL =
         "https://script.google.com/macros/s/AKfycbzdE7xHeDoN-hD5XSI1a7GABauzFtG-6YdewjD4p9t27_INIAEHohskf4rQ0jnW8BVK4Q/exec";
 
@@ -371,15 +397,18 @@
       let currentStream = null;
       let useFacingMode = "user";
       let isCameraOn = true;
-      let photoAlbumData = []; // Untuk UI lokal saat jepret
+      let photoAlbumData = [];
+      let isSessionEnded = false;
 
       function updateStatus(msg) {
-        document.getElementById("status").innerHTML = msg;
+        if (!isSessionEnded) document.getElementById("status").innerHTML = msg;
       }
 
       function setButtonsState(disabledState) {
+        if (isSessionEnded) return;
         document.getElementById("uploadBtn").disabled = disabledState;
         document.getElementById("switchBtn").disabled = disabledState;
+        document.getElementById("toggleCamBtn").disabled = disabledState;
         if (disabledState) {
           document.getElementById("snapBtn").disabled = true;
         } else {
@@ -390,6 +419,7 @@
       }
 
       function initCamera() {
+        if (isSessionEnded) return;
         if (currentStream) {
           currentStream.getTracks().forEach((track) => track.stop());
         }
@@ -407,6 +437,7 @@
             const video = document.getElementById("webcam");
             video.srcObject = stream;
             video.classList.toggle("mirror", useFacingMode === "user");
+            document.getElementById("camOffOverlay").style.display = "none";
             if (photoCount < MAX_PHOTOS) {
               document.getElementById("snapBtn").disabled = false;
             }
@@ -421,31 +452,64 @@
       }
 
       function switchCamera() {
-        if (!isCameraOn) return;
+        if (!isCameraOn || isSessionEnded) return;
         useFacingMode = useFacingMode === "user" ? "environment" : "user";
         initCamera();
       }
 
       function toggleCamera() {
+        if (isSessionEnded) return;
         const btn = document.getElementById("toggleCamBtn");
+        const overlay = document.getElementById("camOffOverlay");
+
         if (isCameraOn) {
           if (currentStream) {
             currentStream.getTracks().forEach((track) => track.stop());
             currentStream = null;
           }
           document.getElementById("webcam").srcObject = null;
+          overlay.style.display = "flex"; // Tampilkan teks kamera off
           document.getElementById("snapBtn").disabled = true;
           document.getElementById("switchBtn").disabled = true;
           btn.innerText = "▶ Nyalakan Kamera";
           btn.classList.replace("btn-cam-off", "btn-cam-on");
-          updateStatus("Kamera dimatikan.");
+          updateStatus("Kamera sedang dimatikan (Off).");
           isCameraOn = false;
         } else {
           initCamera();
+          overlay.style.display = "none"; // Sembunyikan teks kamera off
           document.getElementById("switchBtn").disabled = false;
           btn.innerText = "⏹ Matikan Kamera";
           btn.classList.replace("btn-cam-on", "btn-cam-off");
           isCameraOn = true;
+        }
+      }
+
+      // Tombol Selesai untuk mengakhiri sesi photobooth
+      function finishSession() {
+        if (
+          confirm("Apakah kamu yakin ingin mengakhiri sesi photobooth ini?")
+        ) {
+          isSessionEnded = true;
+          if (currentStream) {
+            currentStream.getTracks().forEach((track) => track.stop());
+            currentStream = null;
+          }
+          document.getElementById("webcam").srcObject = null;
+          document.getElementById("camOffOverlay").style.display = "flex";
+          document.getElementById("camOffOverlay").innerText =
+            "🏁 Sesi Photobooth Selesai";
+
+          // Matikan semua tombol
+          document.getElementById("snapBtn").disabled = true;
+          document.getElementById("uploadBtn").disabled = true;
+          document.getElementById("switchBtn").disabled = true;
+          document.getElementById("toggleCamBtn").disabled = true;
+          document.getElementById("finishBtn").disabled = true;
+
+          updateStatus(
+            "<b>Sesi selesai. Terima kasih telah menggunakan photobooth!</b>",
+          );
         }
       }
 
@@ -468,8 +532,8 @@
         delBtn.id = "del_" + localId;
         delBtn.innerHTML = "✖";
 
-        // Logika Menghapus Foto Lokal & Memindah ke Log Drive
         delBtn.onclick = function () {
+          if (isSessionEnded) return;
           const fileId = this.dataset.fileId;
           itemWrapper.remove();
           photoCount--;
@@ -500,7 +564,7 @@
       }
 
       function processAndUpload(base64Data) {
-        if (photoCount >= MAX_PHOTOS) return;
+        if (photoCount >= MAX_PHOTOS || isSessionEnded) return;
         photoCount++;
         document.getElementById("counter").innerText =
           `Sesi Foto: ${photoCount} / ${MAX_PHOTOS}`;
@@ -536,15 +600,18 @@
             updateStatus("❌ Terjadi kesalahan jaringan.");
           })
           .finally(() => {
-            setButtonsState(false);
-            if (photoCount >= MAX_PHOTOS) {
-              document.getElementById("snapBtn").disabled = true;
-              updateStatus("Sesi penuh (Maksimal 35 foto).");
+            if (!isSessionEnded) {
+              setButtonsState(false);
+              if (photoCount >= MAX_PHOTOS) {
+                document.getElementById("snapBtn").disabled = true;
+                updateStatus("Sesi penuh (Maksimal 35 foto).");
+              }
             }
           });
       }
 
       function takePhoto() {
+        if (isSessionEnded) return;
         triggerFlash();
         const video = document.getElementById("webcam");
         const canvas = document.getElementById("canvas");
@@ -560,6 +627,7 @@
       }
 
       function handleFileUpload(event) {
+        if (isSessionEnded) return;
         const files = event.target.files;
         if (files.length > 0) {
           Array.from(files).forEach((file) => {
@@ -575,7 +643,6 @@
         }
       }
 
-      // MEMUAT DAN MENAMPILKAN ALBUM SERVER (DARI DRIVE)
       function openAlbum() {
         const modal = document.getElementById("albumModal");
         const grid = document.getElementById("albumGrid");
@@ -620,12 +687,11 @@
           });
       }
 
-      // FUNGSI MENGIRIM LIKE KE SERVER
       function likePhoto(fileId, btnElement) {
         btnElement.disabled = true;
         const countSpan = document.getElementById("like-" + fileId);
         let currentLikes = parseInt(countSpan.innerText);
-        countSpan.innerText = currentLikes + 1; // Update UI cepat
+        countSpan.innerText = currentLikes + 1;
 
         fetch(SCRIPT_URL, {
           method: "POST",
@@ -635,11 +701,11 @@
           .then((res) => {
             if (res.success) {
               countSpan.innerText = res.likes;
-            } // Nilai sah dari server
+            }
             btnElement.disabled = false;
           })
           .catch((err) => {
-            countSpan.innerText = currentLikes; // Kembalikan jika error
+            countSpan.innerText = currentLikes;
             btnElement.disabled = false;
           });
       }
