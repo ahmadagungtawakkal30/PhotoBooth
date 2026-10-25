@@ -59,7 +59,6 @@
     .btn:active { transform: scale(0.96); }
     .btn:disabled { background: #475569 !important; cursor: not-allowed; opacity: 0.6; }
     
-    /* Warna tombol custom */
     .btn-snap { background: #ef4444; }
     .btn-upload { background: #3b82f6; }
     .btn-switch { flex: 0 0 50px; background: #334155; font-size: 1.2rem; }
@@ -67,7 +66,6 @@
 
     #status { margin-top: 14px; font-size: 0.85rem; color: #94a3b8; min-height: 20px; line-height: 1.4; }
     
-    /* Galeri Mini */
     .gallery-container {
       margin-top: 16px;
       display: flex;
@@ -97,30 +95,27 @@
       <div id="flash" class="flash"></div>
     </div>
 
-    <!-- Kontrol Kamera -->
     <div class="controls">
       <button id="switchBtn" class="btn btn-switch" onclick="switchCamera()">🔄</button>
       <button id="snapBtn" class="btn btn-snap" onclick="takePhoto()" disabled>📷 Jepret</button>
       <button id="uploadBtn" class="btn btn-upload" onclick="document.getElementById('fileInput').click()">📁 Upload</button>
     </div>
     
-    <!-- Input hidden untuk pilih file -->
-    <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+    <!-- Input hidden untuk pilih multi file -->
+    <input type="file" id="fileInput" accept="image/*" multiple style="display: none;" onchange="handleFileUpload(event)">
 
-    <!-- Tombol Stop Sesi -->
     <button id="stopBtn" class="btn btn-stop" onclick="stopSession()">⏹ Akhiri Sesi</button>
     
     <div id="status">Meminta akses kamera...</div>
 
-    <!-- Container Galeri Foto -->
     <div class="gallery-container" id="gallery"></div>
   </div>
 
   <canvas id="canvas" style="display:none;"></canvas>
 
   <script>
-    // MASUKKAN LINK APPS SCRIPT KAMU DI SINI
-    const SCRIPT_URL = 'URL_APPS_SCRIPT_KAMU'; 
+    // MASUKKAN LINK APPS SCRIPT KAMU DI BAWAH INI
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw_FxfrcqdH0H9KYEWB0YhWWOspfJMQ9_auLuBN2_UTRNVuStrahkkaKHNiH_4Uw2zUGg/exec'; 
     
     let photoCount = 0;
     const MAX_PHOTOS = 35;
@@ -131,7 +126,6 @@
       document.getElementById('status').innerHTML = msg;
     }
 
-    // Inisialisasi Kamera
     function initCamera() {
       if (currentStream) {
         currentStream.getTracks().forEach(track => track.stop());
@@ -172,7 +166,6 @@
       setTimeout(() => flash.classList.remove('active'), 150);
     }
 
-    // Mengakhiri Sesi (Mematikan kamera)
     function stopSession() {
       if (currentStream) {
         currentStream.getTracks().forEach(track => track.stop());
@@ -186,17 +179,14 @@
       updateStatus("Sesi diakhiri. Terima kasih!");
     }
 
-    // Menampilkan foto ke Galeri Mini
     function addToGallery(base64Data) {
       const gallery = document.getElementById('gallery');
       const img = document.createElement('img');
       img.src = base64Data;
       gallery.appendChild(img);
-      // Auto-scroll galeri ke ujung kanan
       gallery.scrollLeft = gallery.scrollWidth;
     }
 
-    // Memproses foto (dari jepretan maupun dari upload) untuk dikirim ke Drive
     function processAndUpload(base64Data) {
       if (photoCount >= MAX_PHOTOS) return;
 
@@ -229,7 +219,6 @@
       });
     }
 
-    // Ambil foto dari Kamera
     function takePhoto() {
       triggerFlash();
       const video = document.getElementById('webcam');
@@ -249,19 +238,20 @@
       processAndUpload(base64Data);
     }
 
-    // Handle Upload File Foto
     function handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (file) {
-        // Reset input value agar bisa pilih file yang sama berulang kali jika perlu
+      const files = event.target.files;
+      if (files.length > 0) {
+        Array.from(files).forEach(file => {
+          if (photoCount < MAX_PHOTOS) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const base64Data = e.target.result;
+              processAndUpload(base64Data);
+            };
+            reader.readAsDataURL(file);
+          }
+        });
         event.target.value = '';
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const base64Data = e.target.result;
-          processAndUpload(base64Data);
-        };
-        reader.readAsDataURL(file);
       }
     }
 
