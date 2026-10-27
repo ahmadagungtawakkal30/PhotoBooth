@@ -297,14 +297,20 @@
       .album-image-error {
         display: flex;
         aspect-ratio: 3/4;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
+        gap: 8px;
         padding: 8px;
         border: 1px solid #475569;
         border-radius: 8px;
         color: #fca5a5;
         font-size: 0.8rem;
         overflow-wrap: anywhere;
+      }
+      .album-image-error a {
+        color: #7dd3fc;
+        text-decoration: underline;
       }
       .like-btn {
         background: #334155;
@@ -475,8 +481,8 @@
           .getUserMedia({
             video: {
               facingMode: useFacingMode,
-              width: { ideal: 1280 },
-              height: { ideal: 960 },
+              width: { ideal: 1920 },
+              height: { ideal: 1440 },
             },
             audio: false,
           })
@@ -485,6 +491,15 @@
             const video = document.getElementById("webcam");
             video.srcObject = stream;
             video.classList.toggle("mirror", useFacingMode === "user");
+            const videoTrack = stream.getVideoTracks()[0];
+            const focusModes = videoTrack.getCapabilities?.().focusMode;
+            if (focusModes?.includes("continuous")) {
+              videoTrack
+                .applyConstraints({ advanced: [{ focusMode: "continuous" }] })
+                .catch((error) => {
+                  console.warn("Autofokus kamera tidak dapat diaktifkan:", error);
+                });
+            }
             document.getElementById("camOffOverlay").style.display = "none";
             if (photoCount < MAX_PHOTOS) {
               document.getElementById("snapBtn").disabled = false;
@@ -729,7 +744,7 @@
           ctx.scale(-1, 1);
         }
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        processAndUpload(canvas.toDataURL("image/jpeg", 0.8));
+        processAndUpload(canvas.toDataURL("image/jpeg", 0.92));
       }
 
       function handleFileUpload(event) {
@@ -772,13 +787,26 @@
                 img.loading = "lazy";
                 const imageError = document.createElement("div");
                 imageError.className = "album-image-error";
-                imageError.textContent =
-                  "Foto tidak dapat dimuat. Periksa izin berbagi Google Drive.";
                 imageError.hidden = true;
+                const errorText = document.createElement("span");
+                errorText.textContent =
+                  "Foto gagal dimuat. File mungkin belum dibagikan untuk akses publik.";
+                imageError.appendChild(errorText);
+                if (photo.id) {
+                  const driveLink = document.createElement("a");
+                  driveLink.href = `https://drive.google.com/file/d/${encodeURIComponent(photo.id)}/view`;
+                  driveLink.target = "_blank";
+                  driveLink.rel = "noopener noreferrer";
+                  driveLink.textContent = "Coba buka di Google Drive";
+                  imageError.appendChild(driveLink);
+                }
                 const imageUrls = [
                   photo.url,
                   photo.id
                     ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(photo.id)}&sz=w1000`
+                    : null,
+                  photo.id
+                    ? `https://lh3.googleusercontent.com/d/${encodeURIComponent(photo.id)}=w1600`
                     : null,
                   photo.id
                     ? `https://drive.google.com/uc?export=view&id=${encodeURIComponent(photo.id)}`
