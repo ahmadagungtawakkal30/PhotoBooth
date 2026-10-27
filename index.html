@@ -775,32 +775,213 @@
         }
       }
 
-      @media (max-width: 480px) {
+      @media (max-width: 600px), (max-height: 500px) and (pointer: coarse) {
         body {
-          padding: 14px 10px;
+          min-height: 100vh;
+          min-height: 100dvh;
+          padding: 0;
+          overflow: hidden;
+          align-items: stretch;
         }
 
         .card {
-          border-radius: 22px;
+          position: relative;
+          width: 100%;
+          max-width: none;
+          height: 100vh;
+          height: 100dvh;
+          min-height: 0;
+          padding: 0;
+          overflow: hidden;
+          border: 0;
+          border-radius: 0;
+          background: #080809;
+          box-shadow: none;
+          text-align: center;
+        }
+
+        .card > h2 {
+          position: absolute;
+          z-index: 8;
+          top: calc(env(safe-area-inset-top, 0px) + 14px);
+          left: 18px;
+          margin: 0;
+          color: #fff1dc;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-size: 1.05rem;
+          font-weight: 650;
+          letter-spacing: 0;
+          text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+        }
+
+        .card > h2::before {
+          display: none;
+        }
+
+        .video-wrapper {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          aspect-ratio: auto;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        video {
+          object-fit: cover;
+        }
+
+        .counter {
+          position: absolute;
+          z-index: 8;
+          top: calc(env(safe-area-inset-top, 0px) + 13px);
+          right: 16px;
+          margin: 0;
+          padding: 7px 11px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(15, 14, 15, 0.58);
+          color: #fff7ec;
+          font-size: 0.72rem;
+          backdrop-filter: blur(12px);
         }
 
         .controls {
-          gap: 8px;
+          position: absolute;
+          z-index: 8;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 82px minmax(0, 1fr);
+          gap: 9px;
+          margin: 0;
+          padding: 18px 18px calc(env(safe-area-inset-bottom, 0px) + 14px);
+          background: linear-gradient(
+            180deg,
+            transparent,
+            rgba(7, 7, 8, 0.72) 18%,
+            rgba(7, 7, 8, 0.94) 100%
+          );
+          backdrop-filter: blur(3px);
         }
 
         .btn {
-          min-height: 45px;
-          padding: 11px 12px;
-          font-size: 0.86rem;
+          min-height: 46px;
+          padding: 10px 8px;
+          font-size: 0.78rem;
         }
 
         .btn-snap {
+          grid-column: 2;
+          grid-row: 1;
+          width: 76px;
+          height: 76px;
           min-height: 76px;
-          font-size: 1.08rem;
+          justify-self: center;
+          padding: 8px;
+          border: 5px solid rgba(255, 246, 232, 0.92);
+          border-radius: 50%;
+          background: linear-gradient(145deg, #f8dfba, #c58b59);
+          color: #25180f;
+          font-size: 0.62rem;
+          font-weight: 800;
+          line-height: 1.1;
+          white-space: normal;
+          box-shadow:
+            0 0 0 2px rgba(220, 172, 119, 0.75),
+            0 6px 24px rgba(0, 0, 0, 0.42);
+        }
+
+        .btn-snap::after {
+          display: none;
+        }
+
+        .btn-switch {
+          grid-column: 1;
+          grid-row: 1;
+          width: 48px;
+          height: 48px;
+          min-height: 48px;
+          justify-self: center;
+          border-radius: 50%;
+          font-size: 1.1rem;
+        }
+
+        .btn-upload {
+          grid-column: 3;
+          grid-row: 1;
+          justify-self: center;
+          width: 100%;
+          max-width: 130px;
+          border-radius: 999px;
+          font-size: 0.82rem;
+        }
+
+        .controls .btn-full {
+          width: 100%;
+          min-height: 42px;
+          margin: 0;
+          grid-column: auto;
+          border-radius: 999px;
+          font-size: 0.74rem;
+        }
+
+        #toggleCamBtn {
+          grid-column: 1;
+          grid-row: 2;
+        }
+
+        #albumBtn {
+          grid-column: 3;
+          grid-row: 2;
+        }
+
+        #finishBtn {
+          grid-column: 1 / -1;
+          grid-row: 3;
+          min-height: 32px;
+        }
+
+        #status {
+          position: absolute;
+          z-index: 7;
+          top: calc(env(safe-area-inset-top, 0px) + 62px);
+          left: 16px;
+          max-width: calc(100% - 32px);
+          min-height: 0;
+          margin: 0;
+          padding: 7px 11px;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          border-radius: 999px;
+          background: rgba(12, 12, 13, 0.55);
+          color: #fff3e3;
+          font-size: 0.72rem;
+          text-align: left;
+          backdrop-filter: blur(12px);
+        }
+
+        .gallery-container {
+          position: absolute;
+          z-index: 7;
+          right: 0;
+          bottom: calc(env(safe-area-inset-bottom, 0px) + 200px);
+          left: 0;
+          margin: 0;
+          padding: 8px 16px;
+          background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.2));
+        }
+
+        .gallery-item img {
+          width: 54px;
+          height: 68px;
+          border: 1px solid rgba(255, 226, 181, 0.65);
+          border-radius: 10px;
         }
 
         .controls {
-          grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr);
+          grid-template-columns: minmax(0, 1fr) 82px minmax(0, 1fr);
         }
 
         .album-grid {
@@ -813,7 +994,39 @@
         }
       }
 
-      @media (min-width: 768px) {
+      @media (max-width: 600px) and (orientation: landscape),
+        (max-height: 600px) and (pointer: coarse) and (orientation: landscape) {
+        .controls {
+          right: 0;
+          left: auto;
+          width: min(330px, 48vw);
+          padding-right: calc(env(safe-area-inset-right, 0px) + 12px);
+          padding-left: 12px;
+        }
+
+        .card > h2 {
+          left: calc(env(safe-area-inset-left, 0px) + 16px);
+        }
+
+        .counter {
+          right: calc(env(safe-area-inset-right, 0px) + 14px);
+        }
+
+        #status {
+          top: auto;
+          bottom: calc(env(safe-area-inset-bottom, 0px) + 188px);
+          left: calc(env(safe-area-inset-left, 0px) + 16px);
+        }
+
+        .gallery-container {
+          right: 340px;
+          bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+          left: calc(env(safe-area-inset-left, 0px) + 12px);
+          width: auto;
+        }
+      }
+
+      @media (min-width: 601px) and (min-height: 601px) {
         .card {
           max-width: 620px;
         }
@@ -974,10 +1187,32 @@
           .getUserMedia({
             video: {
               facingMode: { ideal: useFacingMode },
-              width: { ideal: 1280 },
-              height: { ideal: 960 },
+              width: { ideal: 4096 },
+              height: { ideal: 2160 },
             },
             audio: false,
+          })
+          .catch((error) => {
+            if (
+              error.name === "NotAllowedError" ||
+              error.name === "SecurityError" ||
+              error.name === "NotFoundError"
+            ) {
+              throw error;
+            }
+
+            console.warn(
+              "Resolusi tinggi tidak tersedia; mencoba resolusi kamera standar.",
+              error,
+            );
+            return navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: { ideal: useFacingMode },
+                width: { ideal: 1280 },
+                height: { ideal: 960 },
+              },
+              audio: false,
+            });
           })
           .then((stream) => {
             currentStream = stream;
@@ -987,7 +1222,11 @@
             video.muted = true;
             video.playsInline = true;
             const videoTrack = stream.getVideoTracks()[0];
-            const actualFacingMode = videoTrack.getSettings().facingMode;
+            const cameraSettings = videoTrack.getSettings();
+            const actualFacingMode = cameraSettings.facingMode;
+            console.info(
+              `Resolusi kamera aktif: ${cameraSettings.width || "?"}x${cameraSettings.height || "?"}`,
+            );
             if (actualFacingMode) {
               useFacingMode = actualFacingMode;
             }
@@ -1315,9 +1554,19 @@
           ctx.translate(canvas.width, 0);
           ctx.scale(-1, 1);
         }
-        ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(
+          source,
+          0,
+          0,
+          width,
+          height,
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        );
         ctx.restore();
-        return canvas.toDataURL("image/jpeg", 0.92);
+        return canvas.toDataURL("image/jpeg", 1.0);
       }
 
       async function takePhoto() {
