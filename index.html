@@ -444,7 +444,7 @@
 
     <script>
       const SCRIPT_URL =
-        "https://script.google.com/macros/s/AKfycbw4uJBrJ1keGUXTmurHkIxbV-cfNTB4-SLC2JcpE5Mn_SaQf5-u9dbw6tc4oTT45neA1A/exec";
+        "https://script.google.com/macros/s/AKfycbysmZONUTqutpSpyOZDvQVj9LpO5PuGYoTIJiAqZYIWf1uAo4yMS8du_9_x-mkD7i_uEw/exec";
 
       let photoCount = 0;
       const MAX_PHOTOS = 35;
@@ -497,7 +497,10 @@
               videoTrack
                 .applyConstraints({ advanced: [{ focusMode: "continuous" }] })
                 .catch((error) => {
-                  console.warn("Autofokus kamera tidak dapat diaktifkan:", error);
+                  console.warn(
+                    "Autofokus kamera tidak dapat diaktifkan:",
+                    error,
+                  );
                 });
             }
             document.getElementById("camOffOverlay").style.display = "none";
@@ -686,7 +689,9 @@
         })
           .then((response) => {
             if (!response.ok) {
-              throw new Error(`Server merespons dengan status ${response.status}.`);
+              throw new Error(
+                `Server merespons dengan status ${response.status}.`,
+              );
             }
             return response.json();
           })
@@ -778,8 +783,35 @@
           .then((res) => res.json())
           .then((res) => {
             grid.innerHTML = "";
-            if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-              res.data.forEach((photo) => {
+            if (!res.success) {
+              const errorMessage = document.createElement("p");
+              errorMessage.style.color = "#ef4444";
+              errorMessage.style.gridColumn = "span 3";
+              errorMessage.textContent = `Gagal memuat album: ${res.error || "Terjadi kesalahan pada Apps Script."}`;
+              grid.replaceChildren(errorMessage);
+              return;
+            }
+
+            if (!Array.isArray(res.data)) {
+              const errorMessage = document.createElement("p");
+              errorMessage.style.color = "#ef4444";
+              errorMessage.style.gridColumn = "span 3";
+              errorMessage.textContent =
+                "Respons album Apps Script tidak valid. Periksa deployment Kode.gs.";
+              grid.replaceChildren(errorMessage);
+              return;
+            }
+
+            const photos = res.data.filter(
+              (photo) =>
+                photo &&
+                typeof photo.id === "string" &&
+                typeof photo.mimeType === "string" &&
+                photo.mimeType.startsWith("image/"),
+            );
+
+            if (photos.length > 0) {
+              photos.forEach((photo) => {
                 const card = document.createElement("div");
                 card.className = "album-card";
                 const img = document.createElement("img");
@@ -851,22 +883,16 @@
                 card.appendChild(likeBtn);
                 grid.appendChild(card);
               });
-            } else if (!res.success) {
-              const errorMessage = document.createElement("p");
-              errorMessage.style.color = "#ef4444";
-              errorMessage.style.gridColumn = "span 3";
-              errorMessage.textContent = `Gagal memuat album: ${res.error || "Terjadi kesalahan pada Apps Script."}`;
-              grid.replaceChildren(errorMessage);
-            } else if (!Array.isArray(res.data)) {
+            } else if (res.data.some((item) => item && !item.mimeType)) {
               const errorMessage = document.createElement("p");
               errorMessage.style.color = "#ef4444";
               errorMessage.style.gridColumn = "span 3";
               errorMessage.textContent =
-                "Respons album Apps Script tidak valid. Periksa deployment Kode.gs.";
+                "Apps Script masih memakai format lama. Deploy ulang Code.gs agar hanya foto yang dimuat.";
               grid.replaceChildren(errorMessage);
             } else {
               grid.innerHTML =
-                '<p style="color:#94a3b8; grid-column: span 3;">Belum ada foto di Master Folder.</p>';
+                '<p style="color:#94a3b8; grid-column: span 3;">Belum ada file foto di Master Folder.</p>';
             }
           })
           .catch((err) => {
