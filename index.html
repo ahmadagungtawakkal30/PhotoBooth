@@ -448,9 +448,14 @@
       .controls {
         gap: 10px;
         margin-top: 16px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 84px minmax(0, 1fr);
+        align-items: center;
       }
 
       .btn {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
         min-height: 48px;
         padding: 12px 16px;
         border: 1px solid rgba(255, 255, 255, 0.09);
@@ -479,10 +484,53 @@
       }
 
       .btn-snap {
+        position: relative;
+        grid-column: 1 / -1;
+        grid-row: 1;
+        min-height: 72px;
         border: 0;
-        background: linear-gradient(135deg, #f3d09e, #c88d5a);
+        border: 1px solid rgba(255, 242, 222, 0.62);
+        border-radius: 20px;
+        background: linear-gradient(115deg, #f5d6a8 0%, #d7a16d 52%, #bd8054 100%);
         color: #21160f;
-        box-shadow: 0 7px 22px rgba(196, 132, 79, 0.24);
+        font-size: 1.12rem;
+        letter-spacing: 0.015em;
+        box-shadow:
+          0 10px 28px rgba(196, 132, 79, 0.27),
+          0 1px 0 rgba(255, 255, 255, 0.45) inset;
+        overflow: hidden;
+      }
+
+      .btn-snap::after {
+        position: absolute;
+        inset: 5px;
+        border: 1px solid rgba(66, 42, 24, 0.18);
+        border-radius: 15px;
+        content: "";
+        pointer-events: none;
+      }
+
+      .btn-snap:hover:not(:disabled) {
+        transform: translateY(-2px) scale(1.01);
+        filter: brightness(1.06);
+        box-shadow:
+          0 14px 34px rgba(196, 132, 79, 0.36),
+          0 1px 0 rgba(255, 255, 255, 0.5) inset;
+      }
+
+      .btn-switch {
+        grid-column: 1;
+        grid-row: 2;
+        width: 100%;
+      }
+
+      .btn-upload {
+        grid-column: 3;
+        grid-row: 2;
+      }
+
+      .controls .btn-full {
+        grid-column: 1 / -1;
       }
 
       .btn-upload,
@@ -746,6 +794,15 @@
           font-size: 0.86rem;
         }
 
+        .btn-snap {
+          min-height: 76px;
+          font-size: 1.08rem;
+        }
+
+        .controls {
+          grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr);
+        }
+
         .album-grid {
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 12px;
@@ -780,7 +837,13 @@
       <div class="counter" id="counter">Sesi Foto: 0 / 35</div>
 
       <div class="video-wrapper">
-        <video id="webcam" autoplay playsinline class="mirror"></video>
+        <video
+          id="webcam"
+          autoplay
+          playsinline
+          muted
+          class="mirror"
+        ></video>
         <div id="camOffOverlay" class="cam-off-overlay">
           🔴 Kamera Sedang Off
         </div>
@@ -795,9 +858,10 @@
           id="snapBtn"
           class="btn btn-snap"
           onclick="takePhoto()"
+          aria-label="Ambil foto"
           disabled
         >
-          📷 Jepret
+          📸 &nbsp; Jepret Foto
         </button>
         <button
           id="uploadBtn"
@@ -864,6 +928,7 @@
       let isCameraOn = true;
       let photoAlbumData = [];
       let isSessionEnded = false;
+      let isCapturingPhoto = false;
 
       function updateStatus(msg) {
         if (!isSessionEnded) document.getElementById("status").innerHTML = msg;
@@ -887,49 +952,143 @@
         if (isSessionEnded) return;
         if (currentStream) {
           currentStream.getTracks().forEach((track) => track.stop());
+          currentStream = null;
         }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showCameraError({ name: "SecurityError" });
+          return;
+        }
+
+        isCameraOn = false;
+        const cameraButton = document.getElementById("toggleCamBtn");
+        cameraButton.disabled = true;
+        cameraButton.innerText = "⏳ Mengaktifkan kamera...";
+        document.getElementById("snapBtn").disabled = true;
+        document.getElementById("switchBtn").disabled = true;
+        const overlay = document.getElementById("camOffOverlay");
+        overlay.innerText = "⏳ Izinkan akses kamera pada browser...";
+        overlay.style.display = "flex";
+        updateStatus("Izinkan akses kamera jika browser menampilkan permintaan izin.");
+
         navigator.mediaDevices
           .getUserMedia({
             video: {
-              facingMode: useFacingMode,
-              width: { ideal: 1920 },
-              height: { ideal: 1440 },
+              facingMode: { ideal: useFacingMode },
+              width: { ideal: 1280 },
+              height: { ideal: 960 },
             },
             audio: false,
           })
           .then((stream) => {
             currentStream = stream;
+            isCameraOn = true;
             const video = document.getElementById("webcam");
             video.srcObject = stream;
-            video.classList.toggle("mirror", useFacingMode === "user");
+            video.muted = true;
+            video.playsInline = true;
             const videoTrack = stream.getVideoTracks()[0];
-            const focusModes = videoTrack.getCapabilities?.().focusMode;
-            if (focusModes?.includes("continuous")) {
-              videoTrack
-                .applyConstraints({ advanced: [{ focusMode: "continuous" }] })
-                .catch((error) => {
-                  console.warn(
-                    "Autofokus kamera tidak dapat diaktifkan:",
-                    error,
-                  );
-                });
+            const actualFacingMode = videoTrack.getSettings().facingMode;
+            if (actualFacingMode) {
+              useFacingMode = actualFacingMode;
             }
+            video.classList.toggle(
+              "mirror",
+              (actualFacingMode || useFacingMode) === "user",
+            );
+
+            try {
+              const focusModes =
+                videoTrack.getCapabilities?.().focusMode || [];
+              if (focusModes.includes("continuous")) {
+                videoTrack
+                  .applyConstraints({
+                    advanced: [{ focusMode: "continuous" }],
+                  })
+                  .catch((error) => {
+                    console.warn(
+                      "Autofokus kamera tidak dapat diaktifkan:",
+                      error,
+                    );
+                  });
+              }
+            } catch (error) {
+              console.warn("Informasi fokus kamera tidak tersedia:", error);
+            }
+
             document.getElementById("camOffOverlay").style.display = "none";
+            document.getElementById("switchBtn").disabled = false;
+            const cameraButton = document.getElementById("toggleCamBtn");
+            cameraButton.disabled = false;
+            cameraButton.innerText = "⏹ Matikan Kamera";
+            cameraButton.classList.replace("btn-cam-on", "btn-cam-off");
             if (photoCount < MAX_PHOTOS) {
               document.getElementById("snapBtn").disabled = false;
             }
-            updateStatus("Kamera siap! Silakan jepret foto.");
+            video.play().catch((error) => {
+              console.warn("Preview kamera belum dapat diputar:", error);
+              document.getElementById("snapBtn").disabled = true;
+              updateStatus(
+                "Kamera terhubung. Ketuk area preview untuk mengaktifkan video.",
+              );
+              video.onclick = function () {
+                video.play().then(() => {
+                  video.onclick = null;
+                  if (photoCount < MAX_PHOTOS) {
+                    document.getElementById("snapBtn").disabled = false;
+                  }
+                  updateStatus("Kamera siap! Silakan jepret foto.");
+                });
+              };
+            });
+            if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+              updateStatus("Kamera siap! Silakan jepret foto.");
+            } else {
+              video.addEventListener(
+                "loadeddata",
+                () => updateStatus("Kamera siap! Silakan jepret foto."),
+                { once: true },
+              );
+            }
           })
-          .catch((err) => {
-            updateStatus(
-              '<span style="color:#ef4444; font-weight:bold;">⚠️ Kamera tidak diizinkan/tidak tersedia.</span>',
-            );
-            document.getElementById("snapBtn").disabled = true;
+          .catch((error) => {
+            console.error("Kamera gagal diaktifkan:", error);
+            showCameraError(error);
           });
       }
 
+      function showCameraError(error) {
+        const messages = {
+          NotAllowedError:
+            "Akses kamera ditolak. Izinkan kamera untuk situs ini, lalu tekan “Nyalakan Kamera”.",
+          NotFoundError:
+            "Kamera tidak ditemukan. Sambungkan atau pilih perangkat kamera yang tersedia.",
+          NotReadableError:
+            "Kamera sedang digunakan aplikasi lain. Tutup aplikasi tersebut, lalu coba lagi.",
+          AbortError:
+            "Kamera gagal memulai. Tutup aplikasi lain yang memakai kamera, lalu tekan “Nyalakan Kamera” untuk mencoba lagi.",
+          OverconstrainedError:
+            "Kamera tidak mendukung pengaturan yang diminta. Coba pilih kamera lain.",
+          SecurityError:
+            "Kamera hanya dapat digunakan melalui HTTPS. Buka situs dengan alamat https://.",
+        };
+        const message =
+          messages[error?.name] ||
+          `Kamera gagal diaktifkan${error?.message ? `: ${error.message}` : "."}`;
+        const overlay = document.getElementById("camOffOverlay");
+        overlay.innerText = "📷 Kamera tidak aktif";
+        overlay.style.display = "flex";
+        const cameraButton = document.getElementById("toggleCamBtn");
+        cameraButton.disabled = false;
+        cameraButton.innerText = "▶ Nyalakan Kamera";
+        cameraButton.classList.replace("btn-cam-off", "btn-cam-on");
+        document.getElementById("snapBtn").disabled = true;
+        document.getElementById("switchBtn").disabled = false;
+        isCameraOn = false;
+        updateStatus(`<span style="color:#ef4444; font-weight:bold;">⚠️ ${message}</span>`);
+      }
+
       function switchCamera() {
-        if (!isCameraOn || isSessionEnded) return;
+        if (isSessionEnded) return;
         useFacingMode = useFacingMode === "user" ? "environment" : "user";
         initCamera();
       }
@@ -953,12 +1112,9 @@
           updateStatus("Kamera sedang dimatikan (Off).");
           isCameraOn = false;
         } else {
+          overlay.innerText = "⏳ Mengaktifkan kamera...";
+          overlay.style.display = "flex";
           initCamera();
-          overlay.style.display = "none"; // Sembunyikan teks kamera off
-          document.getElementById("switchBtn").disabled = false;
-          btn.innerText = "⏹ Matikan Kamera";
-          btn.classList.replace("btn-cam-on", "btn-cam-off");
-          isCameraOn = true;
         }
       }
 
@@ -1147,20 +1303,94 @@
         }
       }
 
-      function takePhoto() {
-        if (isSessionEnded) return;
-        triggerFlash();
-        const video = document.getElementById("webcam");
+      function renderCapturedImage(source, width, height) {
         const canvas = document.getElementById("canvas");
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext("2d");
+        ctx.save();
+        ctx.filter =
+          "brightness(1.04) contrast(1.05) saturate(1.08) sepia(0.045)";
         if (useFacingMode === "user") {
           ctx.translate(canvas.width, 0);
           ctx.scale(-1, 1);
         }
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        processAndUpload(canvas.toDataURL("image/jpeg", 0.92));
+        ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+        return canvas.toDataURL("image/jpeg", 0.92);
+      }
+
+      async function takePhoto() {
+        if (isSessionEnded || isCapturingPhoto) return;
+        const video = document.getElementById("webcam");
+        if (!currentStream?.active || video.readyState < 2) {
+          updateStatus("Tunggu sampai preview kamera siap sebelum mengambil foto.");
+          return;
+        }
+
+        if (photoCount >= MAX_PHOTOS) {
+          updateStatus("Sesi penuh (Maksimal 35 foto).");
+          return;
+        }
+
+        isCapturingPhoto = true;
+        const snapButton = document.getElementById("snapBtn");
+        snapButton.disabled = true;
+        snapButton.innerText = "⏳ Memotret...";
+        triggerFlash();
+        updateStatus("Mengambil foto resolusi terbaik...");
+
+        try {
+          const track = currentStream.getVideoTracks()[0];
+          let photoData;
+
+          if (typeof ImageCapture !== "undefined" && track) {
+            try {
+              const imageCapture = new ImageCapture(track);
+              const photoBlob = await imageCapture.takePhoto();
+              const photoBitmap = await createImageBitmap(photoBlob);
+              try {
+                photoData = renderCapturedImage(
+                  photoBitmap,
+                  photoBitmap.width,
+                  photoBitmap.height,
+                );
+              } finally {
+                photoBitmap.close();
+              }
+            } catch (error) {
+              console.warn(
+                "ImageCapture tidak tersedia atau gagal; memakai frame preview sebagai fallback.",
+                error,
+              );
+            }
+          }
+
+          if (!photoData) {
+            if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+              throw new Error("Preview kamera belum siap untuk mengambil foto.");
+            }
+            photoData = renderCapturedImage(
+              video,
+              video.videoWidth,
+              video.videoHeight,
+            );
+          }
+
+          processAndUpload(photoData);
+          if (navigator.vibrate) navigator.vibrate(25);
+        } catch (error) {
+          console.error("Gagal mengambil foto:", error);
+          updateStatus(`❌ Gagal mengambil foto: ${error.message}`);
+        } finally {
+          isCapturingPhoto = false;
+          snapButton.innerText = "📸   Jepret Foto";
+          snapButton.disabled =
+            isSessionEnded ||
+            !isCameraOn ||
+            !currentStream?.active ||
+            photoCount >= MAX_PHOTOS;
+        }
       }
 
       function handleFileUpload(event) {
