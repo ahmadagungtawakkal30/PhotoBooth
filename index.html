@@ -101,6 +101,137 @@
         opacity: 0.8;
       }
 
+      .camera-filter-toggle {
+        position: absolute;
+        z-index: 7;
+        top: 14px;
+        right: 14px;
+        padding: 9px 13px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 999px;
+        background: rgba(15, 14, 15, 0.65);
+        color: #fff1dc;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+      }
+
+      .camera-filter-panel {
+        position: absolute;
+        z-index: 7;
+        top: 62px;
+        right: 14px;
+        width: min(330px, calc(100% - 28px));
+        max-height: min(62%, 410px);
+        overflow-y: auto;
+        padding: 14px;
+        border: 1px solid rgba(255, 226, 181, 0.2);
+        border-radius: 18px;
+        background: rgba(18, 17, 19, 0.88);
+        color: #f7f3ed;
+        box-shadow: 0 16px 38px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(18px);
+      }
+
+      .camera-filter-panel[hidden] {
+        display: none;
+      }
+
+      .filter-panel-heading {
+        margin-bottom: 10px;
+        color: #fff1dc;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .filter-presets {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 2px 1px 10px;
+        scrollbar-width: thin;
+      }
+
+      .filter-preset {
+        display: flex;
+        min-width: 62px;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #cfc5b9;
+        font-size: 0.68rem;
+        cursor: pointer;
+      }
+
+      .filter-preset-swatch {
+        display: block;
+        width: 52px;
+        height: 52px;
+        border: 2px solid transparent;
+        border-radius: 14px;
+        background:
+          radial-gradient(circle at 35% 35%, #f6d2a4 0 12%, transparent 13%),
+          linear-gradient(145deg, #785548, #d2a479 48%, #383c45);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+        transition:
+          transform 160ms ease,
+          border-color 160ms ease;
+      }
+
+      .filter-preset[data-filter="warm"] .filter-preset-swatch {
+        filter: sepia(0.35) saturate(1.3);
+      }
+
+      .filter-preset[data-filter="glow"] .filter-preset-swatch {
+        filter: brightness(1.16) saturate(1.2);
+      }
+
+      .filter-preset[data-filter="vintage"] .filter-preset-swatch {
+        filter: sepia(0.52) contrast(0.92) saturate(0.82);
+      }
+
+      .filter-preset[data-filter="mono"] .filter-preset-swatch {
+        filter: grayscale(1) contrast(1.08);
+      }
+
+      .filter-preset[aria-pressed="true"] .filter-preset-swatch {
+        transform: translateY(-2px);
+        border-color: #ffe2b5;
+      }
+
+      .filter-adjustments {
+        display: grid;
+        gap: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .filter-adjustment {
+        display: grid;
+        grid-template-columns: 78px minmax(0, 1fr) 34px;
+        align-items: center;
+        gap: 9px;
+        color: #e6ddd3;
+        font-size: 0.73rem;
+      }
+
+      .filter-adjustment input {
+        width: 100%;
+        accent-color: #e8bd83;
+      }
+
+      .filter-adjustment output {
+        color: #ffe2b5;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
       .controls {
         margin-top: 16px;
         display: flex;
@@ -511,8 +642,16 @@
         justify-content: flex-start;
         padding: clamp(18px, 4vw, 48px) 16px;
         background:
-          radial-gradient(ellipse at 50% -15%, rgba(147, 87, 67, 0.28), transparent 44%),
-          radial-gradient(ellipse at 100% 70%, rgba(89, 61, 52, 0.16), transparent 35%),
+          radial-gradient(
+            ellipse at 50% -15%,
+            rgba(147, 87, 67, 0.28),
+            transparent 44%
+          ),
+          radial-gradient(
+            ellipse at 100% 70%,
+            rgba(89, 61, 52, 0.16),
+            transparent 35%
+          ),
           #0b0b0d;
         color: #f7f3ed;
       }
@@ -522,7 +661,11 @@
         padding: clamp(18px, 4vw, 30px);
         border: 1px solid rgba(232, 189, 131, 0.17);
         border-radius: 26px;
-        background: linear-gradient(145deg, rgba(30, 29, 31, 0.97), rgba(17, 17, 19, 0.97));
+        background: linear-gradient(
+          145deg,
+          rgba(30, 29, 31, 0.97),
+          rgba(17, 17, 19, 0.97)
+        );
         box-shadow:
           0 28px 80px rgba(0, 0, 0, 0.56),
           0 1px 0 rgba(255, 255, 255, 0.04) inset;
@@ -566,7 +709,11 @@
         border: 1px solid rgba(255, 226, 181, 0.22);
         border-radius: 20px;
         background:
-          radial-gradient(circle at center, rgba(232, 189, 131, 0.08), transparent 55%),
+          radial-gradient(
+            circle at center,
+            rgba(232, 189, 131, 0.08),
+            transparent 55%
+          ),
           #050506;
         box-shadow:
           0 14px 36px rgba(0, 0, 0, 0.32),
@@ -629,7 +776,12 @@
         border: 0;
         border: 1px solid rgba(255, 242, 222, 0.62);
         border-radius: 20px;
-        background: linear-gradient(115deg, #f5d6a8 0%, #d7a16d 52%, #bd8054 100%);
+        background: linear-gradient(
+          115deg,
+          #f5d6a8 0%,
+          #d7a16d 52%,
+          #bd8054 100%
+        );
         color: #21160f;
         font-size: 1.12rem;
         letter-spacing: 0.015em;
@@ -834,7 +986,12 @@
         display: block;
         padding: 12px 12px 10px 38px;
         background:
-          radial-gradient(circle at 19px center, #d6a77a 0 10px, #6e5140 11px 13px, transparent 14px),
+          radial-gradient(
+            circle at 19px center,
+            #d6a77a 0 10px,
+            #6e5140 11px 13px,
+            transparent 14px
+          ),
           #1d1b1e;
         color: #eee1d1;
         content: "MOMENT STUDIO";
@@ -946,7 +1103,8 @@
           left: 18px;
           margin: 0;
           color: #fff1dc;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-family:
+            -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           font-size: 1.05rem;
           font-weight: 650;
           letter-spacing: 0;
@@ -966,6 +1124,17 @@
           border: 0;
           border-radius: 0;
           box-shadow: none;
+        }
+
+        .camera-filter-toggle {
+          top: calc(env(safe-area-inset-top, 0px) + 108px);
+          right: 16px;
+        }
+
+        .camera-filter-panel {
+          top: calc(env(safe-area-inset-top, 0px) + 154px);
+          right: 12px;
+          max-height: min(58%, 390px);
         }
 
         video {
@@ -1189,17 +1358,123 @@
       <div class="counter" id="counter">Sesi Foto: 0 / 35</div>
 
       <div class="video-wrapper">
-        <video
-          id="webcam"
-          autoplay
-          playsinline
-          muted
-          class="mirror"
-        ></video>
+        <video id="webcam" autoplay playsinline muted class="mirror"></video>
         <div id="camOffOverlay" class="cam-off-overlay">
           🔴 Kamera Sedang Off
         </div>
         <div id="flash" class="flash"></div>
+        <button
+          id="filterToggleBtn"
+          class="camera-filter-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="cameraFilterPanel"
+          onclick="toggleFilterPanel()"
+        >
+          ✨ Filter
+        </button>
+        <div id="cameraFilterPanel" class="camera-filter-panel" hidden>
+          <div class="filter-panel-heading">Pilih gaya foto</div>
+          <div
+            class="filter-presets"
+            role="group"
+            aria-label="Preset filter foto"
+          >
+            <button
+              class="filter-preset"
+              type="button"
+              data-filter="original"
+              aria-pressed="true"
+              onclick="selectPhotoFilter('original')"
+            >
+              <span class="filter-preset-swatch"></span>
+              <span>Original</span>
+            </button>
+            <button
+              class="filter-preset"
+              type="button"
+              data-filter="warm"
+              aria-pressed="false"
+              onclick="selectPhotoFilter('warm')"
+            >
+              <span class="filter-preset-swatch"></span>
+              <span>Warm</span>
+            </button>
+            <button
+              class="filter-preset"
+              type="button"
+              data-filter="glow"
+              aria-pressed="false"
+              onclick="selectPhotoFilter('glow')"
+            >
+              <span class="filter-preset-swatch"></span>
+              <span>Glow</span>
+            </button>
+            <button
+              class="filter-preset"
+              type="button"
+              data-filter="vintage"
+              aria-pressed="false"
+              onclick="selectPhotoFilter('vintage')"
+            >
+              <span class="filter-preset-swatch"></span>
+              <span>Vintage</span>
+            </button>
+            <button
+              class="filter-preset"
+              type="button"
+              data-filter="mono"
+              aria-pressed="false"
+              onclick="selectPhotoFilter('mono')"
+            >
+              <span class="filter-preset-swatch"></span>
+              <span>Mono</span>
+            </button>
+          </div>
+          <div class="filter-adjustments">
+            <label class="filter-adjustment" for="smoothFilter">
+              <span>Smooth</span>
+              <input
+                id="smoothFilter"
+                type="range"
+                min="0"
+                max="4"
+                step="0.1"
+                value="0.5"
+                oninput="updatePhotoFilters()"
+              />
+              <output id="smoothFilterValue" for="smoothFilter">0.5</output>
+            </label>
+            <label class="filter-adjustment" for="sharpFilter">
+              <span>Sharp</span>
+              <input
+                id="sharpFilter"
+                type="range"
+                min="0"
+                max="3"
+                step="0.1"
+                value="0.8"
+                oninput="updatePhotoFilters()"
+              />
+              <output id="sharpFilterValue" for="sharpFilter">0.8</output>
+            </label>
+            <label class="filter-adjustment" for="brightnessFilter">
+              <span>Brightness</span>
+              <input
+                id="brightnessFilter"
+                type="range"
+                min="0.75"
+                max="1.5"
+                step="0.05"
+                value="1.05"
+                oninput="updatePhotoFilters()"
+              />
+              <output id="brightnessFilterValue" for="brightnessFilter"
+                >1.05</output
+              >
+            </label>
+          </div>
+        </div>
       </div>
 
       <div class="controls">
@@ -1287,7 +1562,11 @@
         &#10094;
       </button>
       <div id="photoViewerStage" class="photo-viewer-stage">
-        <img id="photoViewerImage" class="photo-viewer-image" alt="Foto album" />
+        <img
+          id="photoViewerImage"
+          class="photo-viewer-image"
+          alt="Foto album"
+        />
       </div>
       <button
         id="nextPhotoBtn"
@@ -1299,20 +1578,71 @@
         &#10095;
       </button>
       <div class="photo-viewer-controls">
-        <button type="button" aria-label="Perkecil foto" onclick="changePhotoZoom(-0.5)">
+        <button
+          type="button"
+          aria-label="Perkecil foto"
+          onclick="changePhotoZoom(-0.5)"
+        >
           &minus;
         </button>
-        <span id="photoViewerZoomLabel" class="photo-viewer-zoom-label">100%</span>
-        <button type="button" aria-label="Perbesar foto" onclick="changePhotoZoom(0.5)">
+        <span id="photoViewerZoomLabel" class="photo-viewer-zoom-label"
+          >100%</span
+        >
+        <button
+          type="button"
+          aria-label="Perbesar foto"
+          onclick="changePhotoZoom(0.5)"
+        >
           +
         </button>
-        <button type="button" aria-label="Atur ulang zoom" onclick="resetPhotoZoom()">
+        <button
+          type="button"
+          aria-label="Atur ulang zoom"
+          onclick="resetPhotoZoom()"
+        >
           Reset
         </button>
       </div>
     </div>
 
     <canvas id="canvas" style="display: none"></canvas>
+    <svg
+      aria-hidden="true"
+      width="0"
+      height="0"
+      style="position: absolute"
+    >
+      <filter id="photo-beauty-filter" color-interpolation-filters="sRGB">
+        <feGaussianBlur
+          id="photo-smooth-blur"
+          in="SourceGraphic"
+          stdDeviation="0"
+          result="smooth-layer"
+        />
+        <feComponentTransfer in="smooth-layer" result="softened">
+          <feFuncA
+            id="photo-smooth-opacity"
+            type="linear"
+            slope="0"
+          />
+        </feComponentTransfer>
+        <feConvolveMatrix
+          id="photo-sharpen"
+          in="SourceGraphic"
+          order="3"
+          kernelMatrix="0 0 0 0 1 0 0 0 0"
+          preserveAlpha="true"
+          result="sharpened"
+        />
+        <feBlend
+          in="sharpened"
+          in2="SourceGraphic"
+          mode="normal"
+          result="base-layer"
+        />
+        <feBlend in="softened" in2="base-layer" mode="normal" />
+      </filter>
+    </svg>
 
     <script>
       const SCRIPT_URL =
@@ -1338,6 +1668,164 @@
       let viewerGestureStart = null;
       const viewerPointers = new Map();
       let viewerPinchStart = null;
+      const PHOTO_FILTERS = {
+        original: {
+          brightness: 1,
+          contrast: 1,
+          saturate: 1,
+          sepia: 0,
+          grayscale: 0,
+        },
+        warm: {
+          brightness: 1.03,
+          contrast: 1.07,
+          saturate: 1.18,
+          sepia: 0.16,
+          grayscale: 0,
+        },
+        glow: {
+          brightness: 1.12,
+          contrast: 1.03,
+          saturate: 1.2,
+          sepia: 0.06,
+          grayscale: 0,
+        },
+        vintage: {
+          brightness: 1.03,
+          contrast: 0.94,
+          saturate: 0.78,
+          sepia: 0.28,
+          grayscale: 0,
+        },
+        mono: {
+          brightness: 1.04,
+          contrast: 1.08,
+          saturate: 0,
+          sepia: 0,
+          grayscale: 1,
+        },
+      };
+      let selectedPhotoFilter = "original";
+
+      function toggleFilterPanel() {
+        const panel = document.getElementById("cameraFilterPanel");
+        const isOpening = panel.hidden;
+        panel.hidden = !isOpening;
+        document
+          .getElementById("filterToggleBtn")
+          .setAttribute("aria-expanded", String(isOpening));
+      }
+
+      function selectPhotoFilter(filterName) {
+        if (!PHOTO_FILTERS[filterName]) return;
+        selectedPhotoFilter = filterName;
+        document.querySelectorAll(".filter-preset").forEach((button) => {
+          button.setAttribute(
+            "aria-pressed",
+            String(button.dataset.filter === filterName),
+          );
+        });
+        updatePhotoFilters();
+      }
+
+      function getPhotoFilterSettings() {
+        const preset = PHOTO_FILTERS[selectedPhotoFilter];
+        const smooth = Number(document.getElementById("smoothFilter").value);
+        const sharp = Number(document.getElementById("sharpFilter").value);
+        const brightness = Number(
+          document.getElementById("brightnessFilter").value,
+        );
+        return {
+          smooth,
+          sharp,
+          brightness,
+          contrast: preset.contrast + sharp * 0.055,
+          saturate: preset.saturate,
+          sepia: preset.sepia,
+          grayscale: preset.grayscale,
+        };
+      }
+
+      function updatePhotoFilters() {
+        const settings = getPhotoFilterSettings();
+        document.getElementById("smoothFilterValue").value =
+          settings.smooth.toFixed(1);
+        document.getElementById("sharpFilterValue").value =
+          settings.sharp.toFixed(1);
+        document.getElementById("brightnessFilterValue").value =
+          settings.brightness.toFixed(2);
+
+        const blur = document.getElementById("photo-smooth-blur");
+        blur.setAttribute("stdDeviation", String(settings.smooth));
+        document
+          .getElementById("photo-smooth-opacity")
+          .setAttribute("slope", String(Math.min(settings.smooth * 0.25, 0.7)));
+
+        const edge = -(settings.sharp * 0.25);
+        const center = 1 - edge * 4;
+        document
+          .getElementById("photo-sharpen")
+          .setAttribute(
+            "kernelMatrix",
+            `0 ${edge} 0 ${edge} ${center} ${edge} 0 ${edge} 0`,
+          );
+
+        const video = document.getElementById("webcam");
+        video.style.filter = [
+          "url(#photo-beauty-filter)",
+          `brightness(${settings.brightness * PHOTO_FILTERS[selectedPhotoFilter].brightness})`,
+          `contrast(${settings.contrast})`,
+          `saturate(${settings.saturate})`,
+          `sepia(${settings.sepia})`,
+          `grayscale(${settings.grayscale})`,
+        ].join(" ");
+      }
+
+      function sharpenCanvas(canvas, strength) {
+        if (strength <= 0 || canvas.width < 3 || canvas.height < 3) return;
+
+        const ctx = canvas.getContext("2d");
+        const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = image.data;
+        const rowLength = canvas.width * 4;
+        const previousRow = new Uint8ClampedArray(rowLength);
+        const currentRow = new Uint8ClampedArray(rowLength);
+        let nextRow = new Uint8ClampedArray(rowLength);
+        previousRow.set(pixels.subarray(0, rowLength));
+        currentRow.set(pixels.subarray(rowLength, rowLength * 2));
+        nextRow.set(pixels.subarray(rowLength * 2, rowLength * 3));
+        const amount = Math.min(0.75, strength * 0.25);
+
+        for (let y = 1; y < canvas.height - 1; y += 1) {
+          const rowStart = y * rowLength;
+          for (let x = 1; x < canvas.width - 1; x += 1) {
+            const pixelIndex = x * 4;
+            for (let channel = 0; channel < 3; channel += 1) {
+              const center = currentRow[pixelIndex + channel];
+              const neighbors =
+                previousRow[pixelIndex + channel] +
+                currentRow[pixelIndex - 4 + channel] +
+                currentRow[pixelIndex + 4 + channel] +
+                nextRow[pixelIndex + channel];
+              pixels[rowStart + pixelIndex + channel] =
+                center + amount * (center * 4 - neighbors);
+            }
+          }
+
+          if (y < canvas.height - 2) {
+            previousRow.set(currentRow);
+            currentRow.set(nextRow);
+            nextRow.set(
+              pixels.subarray(
+                (y + 2) * rowLength,
+                (y + 3) * rowLength,
+              ),
+            );
+          }
+        }
+
+        ctx.putImageData(image, 0, 0);
+      }
 
       function updateStatus(msg) {
         if (!isSessionEnded) document.getElementById("status").innerHTML = msg;
@@ -1379,7 +1867,9 @@
         const overlay = document.getElementById("camOffOverlay");
         overlay.innerText = "⏳ Izinkan akses kamera pada browser...";
         overlay.style.display = "flex";
-        updateStatus("Izinkan akses kamera jika browser menampilkan permintaan izin.");
+        updateStatus(
+          "Izinkan akses kamera jika browser menampilkan permintaan izin.",
+        );
 
         navigator.mediaDevices
           .getUserMedia({
@@ -1428,6 +1918,7 @@
             video.srcObject = stream;
             video.muted = true;
             video.playsInline = true;
+            updatePhotoFilters();
             const videoTrack = stream.getVideoTracks()[0];
             const cameraSettings = videoTrack.getSettings();
             const actualFacingMode = cameraSettings.facingMode;
@@ -1443,8 +1934,7 @@
             );
 
             try {
-              const focusModes =
-                videoTrack.getCapabilities?.().focusMode || [];
+              const focusModes = videoTrack.getCapabilities?.().focusMode || [];
               if (focusModes.includes("continuous")) {
                 videoTrack
                   .applyConstraints({
@@ -1532,7 +2022,9 @@
         document.getElementById("snapBtn").disabled = true;
         document.getElementById("switchBtn").disabled = false;
         isCameraOn = false;
-        updateStatus(`<span style="color:#ef4444; font-weight:bold;">⚠️ ${message}</span>`);
+        updateStatus(
+          `<span style="color:#ef4444; font-weight:bold;">⚠️ ${message}</span>`,
+        );
       }
 
       function switchCamera() {
@@ -1758,9 +2250,16 @@
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d");
+        const settings = getPhotoFilterSettings();
+        const preset = PHOTO_FILTERS[selectedPhotoFilter];
         ctx.save();
-        ctx.filter =
-          "brightness(1.04) contrast(1.05) saturate(1.08) sepia(0.045)";
+        ctx.filter = [
+          `brightness(${settings.brightness * preset.brightness})`,
+          `contrast(${settings.contrast})`,
+          `saturate(${settings.saturate})`,
+          `sepia(${settings.sepia})`,
+          `grayscale(${settings.grayscale})`,
+        ].join(" ");
         if (useFacingMode === "user") {
           ctx.translate(canvas.width, 0);
           ctx.scale(-1, 1);
@@ -1776,6 +2275,22 @@
           canvas.width,
           canvas.height,
         );
+        sharpenCanvas(canvas, settings.sharp);
+        if (settings.smooth > 0) {
+          ctx.globalAlpha = Math.min(0.7, settings.smooth * 0.25);
+          ctx.filter = `blur(${settings.smooth}px)`;
+          ctx.drawImage(
+            source,
+            0,
+            0,
+            width,
+            height,
+            0,
+            0,
+            canvas.width,
+            canvas.height,
+          );
+        }
         ctx.restore();
         return canvas.toDataURL("image/jpeg", 1.0);
       }
@@ -1784,7 +2299,9 @@
         if (isSessionEnded || isCapturingPhoto) return;
         const video = document.getElementById("webcam");
         if (!currentStream?.active || video.readyState < 2) {
-          updateStatus("Tunggu sampai preview kamera siap sebelum mengambil foto.");
+          updateStatus(
+            "Tunggu sampai preview kamera siap sebelum mengambil foto.",
+          );
           return;
         }
 
@@ -1827,8 +2344,14 @@
           }
 
           if (!photoData) {
-            if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
-              throw new Error("Preview kamera belum siap untuk mengambil foto.");
+            if (
+              video.readyState < 2 ||
+              !video.videoWidth ||
+              !video.videoHeight
+            ) {
+              throw new Error(
+                "Preview kamera belum siap untuk mengambil foto.",
+              );
             }
             photoData = renderCapturedImage(
               video,
@@ -1979,7 +2502,9 @@
                   img.tabIndex = 0;
                   img.setAttribute("role", "button");
                   img.setAttribute("aria-label", "Buka foto ukuran penuh");
-                  img.addEventListener("click", () => openPhotoViewer(photoIndex));
+                  img.addEventListener("click", () =>
+                    openPhotoViewer(photoIndex),
+                  );
                   img.addEventListener("keydown", (event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
@@ -2111,8 +2636,7 @@
         const maxPanY = (image.clientHeight * (viewerZoom - 1)) / 2;
         viewerPanX = Math.max(-maxPanX, Math.min(maxPanX, viewerPanX));
         viewerPanY = Math.max(-maxPanY, Math.min(maxPanY, viewerPanY));
-        image.style.transform =
-          `translate(${viewerPanX}px, ${viewerPanY}px) scale(${viewerZoom})`;
+        image.style.transform = `translate(${viewerPanX}px, ${viewerPanY}px) scale(${viewerZoom})`;
         document.getElementById("photoViewerZoomLabel").textContent =
           `${Math.round(viewerZoom * 100)}%`;
       }
@@ -2203,10 +2727,7 @@
           }
           if (viewerPointers.size === 2 && viewerPinchStart) {
             const [first, second] = [...viewerPointers.values()];
-            const distance = Math.hypot(
-              second.x - first.x,
-              second.y - first.y,
-            );
+            const distance = Math.hypot(second.x - first.x, second.y - first.y);
             viewerZoom = Math.max(
               1,
               Math.min(
@@ -2265,16 +2786,14 @@
           viewerPinchStart = null;
         });
 
-      document
-        .getElementById("photoViewerStage")
-        .addEventListener(
-          "wheel",
-          (event) => {
-            event.preventDefault();
-            changePhotoZoom(event.deltaY < 0 ? 0.25 : -0.25);
-          },
-          { passive: false },
-        );
+      document.getElementById("photoViewerStage").addEventListener(
+        "wheel",
+        (event) => {
+          event.preventDefault();
+          changePhotoZoom(event.deltaY < 0 ? 0.25 : -0.25);
+        },
+        { passive: false },
+      );
 
       document.addEventListener("keydown", (event) => {
         const viewerIsOpen = !document.getElementById("photoViewer").hidden;
@@ -2290,6 +2809,7 @@
         }
       });
 
+      updatePhotoFilters();
       initCamera();
     </script>
   </body>
