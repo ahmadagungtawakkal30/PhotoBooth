@@ -364,6 +364,414 @@
           grid-template-columns: repeat(4, 1fr);
         }
       }
+
+      body {
+        --accent: #e8bd83;
+        --accent-light: #ffe2b5;
+        --surface: rgba(20, 20, 24, 0.88);
+        --muted: #a7a3a0;
+        justify-content: flex-start;
+        padding: clamp(18px, 4vw, 48px) 16px;
+        background:
+          radial-gradient(ellipse at 50% -15%, rgba(147, 87, 67, 0.28), transparent 44%),
+          radial-gradient(ellipse at 100% 70%, rgba(89, 61, 52, 0.16), transparent 35%),
+          #0b0b0d;
+        color: #f7f3ed;
+      }
+
+      .card {
+        max-width: 510px;
+        padding: clamp(18px, 4vw, 30px);
+        border: 1px solid rgba(232, 189, 131, 0.17);
+        border-radius: 26px;
+        background: linear-gradient(145deg, rgba(30, 29, 31, 0.97), rgba(17, 17, 19, 0.97));
+        box-shadow:
+          0 28px 80px rgba(0, 0, 0, 0.56),
+          0 1px 0 rgba(255, 255, 255, 0.04) inset;
+        text-align: left;
+        animation: card-arrive 650ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+
+      .card > h2 {
+        margin: 0 0 4px;
+        color: var(--accent-light);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(1.7rem, 6vw, 2.2rem);
+        font-weight: 500;
+        letter-spacing: -0.045em;
+      }
+
+      .card > h2::before {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--accent);
+        content: "THE MOMENT STUDIO  /  PHOTOBOOTH";
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 0.64rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+      }
+
+      .counter {
+        margin: 8px 0 18px;
+        padding: 7px 12px;
+        border: 1px solid rgba(232, 189, 131, 0.22);
+        border-radius: 999px;
+        background: rgba(232, 189, 131, 0.08);
+        color: #e6d6c1;
+        font-size: 0.76rem;
+        letter-spacing: 0.04em;
+      }
+
+      .video-wrapper {
+        aspect-ratio: 4 / 3;
+        border: 1px solid rgba(255, 226, 181, 0.22);
+        border-radius: 20px;
+        background:
+          radial-gradient(circle at center, rgba(232, 189, 131, 0.08), transparent 55%),
+          #050506;
+        box-shadow:
+          0 14px 36px rgba(0, 0, 0, 0.32),
+          0 0 0 5px rgba(232, 189, 131, 0.035);
+      }
+
+      video {
+        filter: saturate(1.04) contrast(1.02);
+      }
+
+      .cam-off-overlay {
+        background: rgba(10, 10, 12, 0.94);
+        color: var(--accent-light);
+        letter-spacing: 0.04em;
+      }
+
+      .controls {
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .btn {
+        min-height: 48px;
+        padding: 12px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 14px;
+        background: #272629;
+        color: #f8f3ec;
+        font-size: 0.92rem;
+        font-weight: 650;
+        box-shadow: 0 5px 14px rgba(0, 0, 0, 0.16);
+        transition:
+          transform 180ms ease,
+          filter 180ms ease,
+          border-color 180ms ease,
+          box-shadow 180ms ease;
+      }
+
+      .btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        filter: brightness(1.12);
+        border-color: rgba(255, 226, 181, 0.34);
+        box-shadow: 0 9px 22px rgba(0, 0, 0, 0.28);
+      }
+
+      .btn:active:not(:disabled) {
+        transform: scale(0.97);
+      }
+
+      .btn-snap {
+        border: 0;
+        background: linear-gradient(135deg, #f3d09e, #c88d5a);
+        color: #21160f;
+        box-shadow: 0 7px 22px rgba(196, 132, 79, 0.24);
+      }
+
+      .btn-upload,
+      .btn-switch {
+        background: #28272a;
+        color: #eee5da;
+      }
+
+      .btn-switch {
+        flex-basis: 52px;
+      }
+
+      .btn-full {
+        flex: 100%;
+        margin-top: 2px;
+      }
+
+      .btn-cam-off,
+      .btn-cam-on {
+        background: #242326;
+        color: #d7c7b5;
+      }
+
+      .btn-album {
+        border-color: rgba(232, 189, 131, 0.25);
+        background: rgba(232, 189, 131, 0.09);
+        color: var(--accent-light);
+      }
+
+      .btn-finish {
+        border-color: transparent;
+        background: transparent;
+        color: #999398;
+        box-shadow: none;
+      }
+
+      #status {
+        min-height: 24px;
+        margin-top: 17px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .gallery-container {
+        gap: 11px;
+        margin-top: 18px;
+        padding: 4px 2px 10px;
+        scrollbar-color: #685442 transparent;
+        scrollbar-width: thin;
+      }
+
+      .gallery-item img {
+        width: 66px;
+        height: 82px;
+        border: 1px solid rgba(255, 226, 181, 0.38);
+        border-radius: 12px;
+        box-shadow: 0 5px 14px rgba(0, 0, 0, 0.28);
+      }
+
+      .upload-progress {
+        border-radius: 12px;
+        background: rgba(12, 12, 14, 0.88);
+        color: var(--accent-light);
+      }
+
+      .upload-progress-fill {
+        background: var(--accent);
+      }
+
+      .delete-btn {
+        top: -5px;
+        right: -5px;
+        width: 22px;
+        height: 22px;
+        border-color: #19181a;
+        background: #b94e48;
+      }
+
+      .modal {
+        padding: clamp(12px, 3vw, 28px);
+        background: rgba(5, 5, 7, 0.82);
+        backdrop-filter: blur(14px);
+      }
+
+      .modal-content {
+        max-width: 1000px;
+        margin: clamp(14px, 5vh, 48px) auto;
+        padding: clamp(18px, 4vw, 34px);
+        border: 1px solid rgba(232, 189, 131, 0.2);
+        border-radius: 24px;
+        background: linear-gradient(145deg, #201e20, #141315);
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.56);
+        text-align: left;
+        animation: modal-arrive 260ms ease-out both;
+      }
+
+      .modal-content > h2 {
+        margin: 0 0 5px !important;
+        color: var(--accent-light) !important;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(1.65rem, 5vw, 2.1rem);
+        font-weight: 500;
+      }
+
+      .modal-content > h2::after {
+        display: block;
+        margin-top: 5px;
+        color: #aaa1a0;
+        content: "Momen terbaik, tersimpan untuk dikenang";
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 0.78rem;
+        font-weight: 400;
+        letter-spacing: 0.02em;
+      }
+
+      .close-modal {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        color: #ded4c9;
+        font-size: 24px;
+        line-height: 1;
+        transition: 180ms ease;
+      }
+
+      .close-modal:hover {
+        transform: rotate(90deg);
+        border-color: rgba(232, 189, 131, 0.45);
+        color: var(--accent-light);
+      }
+
+      .album-grid {
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 18px;
+        margin-top: 24px;
+      }
+
+      .album-card {
+        min-width: 0;
+        gap: 0;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.085);
+        border-radius: 17px;
+        background: #1d1b1e;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        transition:
+          transform 220ms ease,
+          border-color 220ms ease,
+          box-shadow 220ms ease;
+        animation: card-arrive 380ms ease both;
+      }
+
+      .album-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(232, 189, 131, 0.36);
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32);
+      }
+
+      .album-card::before {
+        display: block;
+        padding: 12px 12px 10px 38px;
+        background:
+          radial-gradient(circle at 19px center, #d6a77a 0 10px, #6e5140 11px 13px, transparent 14px),
+          #1d1b1e;
+        color: #eee1d1;
+        content: "MOMENT STUDIO";
+        font-size: 0.62rem;
+        font-weight: 750;
+        letter-spacing: 0.14em;
+      }
+
+      .album-card img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 4 / 4.7;
+        border: 0;
+        border-radius: 0;
+        background: #111;
+        box-shadow: none;
+        object-fit: cover;
+        transition: transform 350ms ease;
+      }
+
+      .album-card:hover img {
+        transform: scale(1.025);
+      }
+
+      .album-image-error {
+        aspect-ratio: 4 / 4.7;
+        border: 0;
+        border-radius: 0;
+        background: #171518;
+        color: #e3b6a8;
+      }
+
+      .album-image-error a {
+        color: var(--accent-light);
+      }
+
+      .like-btn {
+        min-height: 44px;
+        padding: 10px 13px;
+        border: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 0;
+        background: #1d1b1e;
+        color: #e9dfd4;
+        font-size: 0.9rem;
+        justify-content: flex-start;
+      }
+
+      .like-btn:hover {
+        background: #292529;
+      }
+
+      .like-btn:active {
+        transform: scale(0.98);
+      }
+
+      @keyframes card-arrive {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes modal-arrive {
+        from {
+          opacity: 0;
+          transform: translateY(10px) scale(0.99);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @media (max-width: 480px) {
+        body {
+          padding: 14px 10px;
+        }
+
+        .card {
+          border-radius: 22px;
+        }
+
+        .controls {
+          gap: 8px;
+        }
+
+        .btn {
+          min-height: 45px;
+          padding: 11px 12px;
+          font-size: 0.86rem;
+        }
+
+        .album-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .modal-content {
+          border-radius: 20px;
+        }
+      }
+
+      @media (min-width: 768px) {
+        .card {
+          max-width: 620px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
     </style>
   </head>
   <body>
